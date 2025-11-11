@@ -32,3 +32,36 @@ yum install -y ~/rpmbuild/obsidian-1.9.14-2.x86_64.rpm
 # cleanup
 rm -f /tmp/obsidian_1.9.14_amd64.deb
 # cd ~/; rm -rf ~/rpmbuild/
+
+
+# Sign the new package
+# create a key, fill in some informatino
+gpg --full-gen-key
+#GnuPG needs to construct a user ID to identify your key.
+#...
+#Real name: Cyber Operations Package Management
+#Email address: admin@domain.example.com
+#Comment: RPM Signing Key
+
+# export the key so it can be imported into rpm, must match real name set above
+gpg --export -a 'Cyber Operations Package Management' > ~/signing_key
+
+# import the key into rpm
+rpm --import ~/signing_key
+
+# add the key name to the signing macro
+cat << EOF >> ~/.rpmmacros
+%_signature gpg
+%_gpg_name Cyber Operations Package Management
+%_gpgbin /usr/bin/gpg2
+
+EOF
+
+# Validate that the package is not already signed
+rpm -qip ~/rpmbuild/obsidian-1.9.14-2.x86_64.rpm | grep Signature
+
+# sign the rpm
+rpm --addsign ~/rpmbuild/obsidian-1.9.14-2.x86_64.rpm
+
+# validate that the package is now signed
+rpm -qip ~/rpmbuild/obsidian-1.9.14-2.x86_64.rpm | grep Signature
